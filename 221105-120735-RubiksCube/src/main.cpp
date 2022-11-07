@@ -1,21 +1,23 @@
+#include "stepContr.hpp"
+#include <Arduino.h>
 #include <Wire.h>
 #include <string.h>
 
-volatile String Buffer;                                    //String erstellen, um serielle Daten Zwischenzuspeichern
-int Rotationen = 0;
-bool busy = false;
-int Zeit = 220;
-int cnt1 = 0;
-int Drehungen = 0;
-
-#define DIR 10
-#define STEP 16
+#define DIR 16
+#define STEP 10
 #define EN1 2
 #define EN2 3
 #define EN3 4
 #define EN4 5
 #define EN5 6
 #define EN6 7
+
+extern String Buffer;                                    //String erstellen, um serielle Daten Zwischenzuspeichern
+extern int Rotationen;
+extern bool busy;
+extern int Zeit;
+extern int cnt1;
+extern int Drehungen;
 
 void setup() {
     pinMode(DIR, OUTPUT);
@@ -27,6 +29,9 @@ void setup() {
     pinMode(EN5, OUTPUT);
     pinMode(EN6, OUTPUT);
     Pin_Reset();
+    Serial.begin(115200);
+    Serial.println("Dieses Programm aktzeptiert über die serielle Schnittstelle bereitgestellte Bewegungsstrings zum lösen eines Zauberwürfels");
+    Serial.println("Es steuert dafür sechs Schrittmotortreiber an");
 }
 
 
@@ -43,7 +48,7 @@ void loop() {
     substring = Buffer.substring(index, Buffer.indexOf(' ', index));
     Serial.println(substring);
     leseSchritt(substring);
-    delay(200);
+    delay(400);
     Pin_Reset();
     index = Buffer.indexOf(' ', index)+1;
     } while((index-1) != -1);
