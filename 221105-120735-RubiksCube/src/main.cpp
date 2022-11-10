@@ -1,4 +1,4 @@
-#include "stepContr.hpp"
+#include "motorContr.hpp"
 #include <Arduino.h>
 #include <Wire.h>
 #include <string.h>
@@ -42,7 +42,7 @@ void loop() {
     busy = true;             
     Buffer = Serial.readString();               //einlesen
     Buffer.trim();                              //entfernt Steuerzeichen etc.
-    int index = 0;
+
     String substring;
     do{
     substring = Buffer.substring(index, Buffer.indexOf(' ', index));
