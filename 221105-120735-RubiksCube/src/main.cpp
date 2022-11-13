@@ -1,4 +1,5 @@
 #include "motorContr.hpp"
+#include "cubeparser.hpp"
 #include <Arduino.h>
 #include <Wire.h>
 #include <string.h>
@@ -18,6 +19,8 @@ extern bool busy;
 extern int Zeit;
 extern int cnt1;
 extern int Drehungen;
+movement movementList[50];
+movement* lastmovement;
 
 void setup() {
     pinMode(DIR, OUTPUT);
@@ -36,22 +39,44 @@ void setup() {
 
 
 void loop() {
-  if ((Serial.available() > 0)&&(!busy))        //Daten vorhanden
-  { 
+  if ((Serial.available() > 0)) {        //Daten vorhanden
     Pin_Reset();
-    busy = true;             
     Buffer = Serial.readString();               //einlesen
     Buffer.trim();                              //entfernt Steuerzeichen etc.
-
-    String substring;
-    do{
-    substring = Buffer.substring(index, Buffer.indexOf(' ', index));
-    Serial.println(substring);
-    leseSchritt(substring);
-    delay(400);
-    Pin_Reset();
-    index = Buffer.indexOf(' ', index)+1;
-    } while((index-1) != -1);
-    busy = false;
+    lastmovement = cubeparser(movementList, Buffer);
    }
+   for(movement movement : movementList){
+    switch (movement.axes){
+      case front : digitalWrite(EN1, LOW);
+      break;
+      case back : digitalWrite(EN2, LOW);
+      break;
+      case left : digitalWrite(EN3, LOW);
+      break;
+      case right : digitalWrite(EN4, LOW);
+      break;
+      case up : digitalWrite(EN5, LOW);
+      break;
+      case down : digitalWrite(EN6, LOW);
+      break;
+      case frontBack :  digitalWrite(EN1, LOW);
+                        digitalWrite(EN2, LOW);
+      break;
+      case upDown : digitalWrite(EN3, LOW);
+                    digitalWrite(EN4, LOW);
+      break;
+      case leftRight : digitalWrite(EN5, LOW);
+                      digitalWrite(EN6, LOW);
+      default : Pin_Reset();
+    }
+    if (movement.direction == cw){
+      digitalWrite(DIR, LOW);
+    }
+    else {
+      digitalWrite(DIR, HIGH);
+    }
+    Fahren();
+    if (&movement == lastmovement)
+      break;
+  }
 }

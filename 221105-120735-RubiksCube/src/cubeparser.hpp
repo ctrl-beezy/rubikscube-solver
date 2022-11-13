@@ -25,7 +25,8 @@ struct movement {
     enum dir direction = cw;
 };
 
-void cubeparser (movement* lastmovement, String inputString);
+movement* cubeparser (movement* lastmovement, String inputString);
 movement movementdecode(String movestring);
+enum motor checkOpposite(enum motor axes1, enum motor axes2);
 
 #endif

@@ -1,26 +1,31 @@
 #include "cubeparser.hpp"
+#include <Arduino.h>
 
-void cubeparser(movement* lastmovement, String inputString){ // loop over inputString and write movements to array
+movement* cubeparser(movement* lastmovement, String inputString){ // loop over inputString and write movements to array
     int index = 0;
     String substring;
-    movement lastmove;
+    movement lastmove = *lastmovement;
     movement move;
     do{
         substring = inputString.substring(index, inputString.indexOf(' ', index)); //create substring with one movement
+        Serial.println(substring);
         move = movementdecode(substring); // decode single movement
-        if ((lastmovement+1)) // check if array is full
-        {
+        if(move.angleDegrees == lastmove.angleDegrees && move.direction == lastmove.direction){
+            if (checkOpposite(move.axes, lastmove.axes) != none){
+                lastmovement->axes = checkOpposite(move.axes,lastmove.axes);
+                continue;
+            }
+
+        }
+        if ((lastmovement+1)){ // check if array is full
             lastmovement += 1; //increment array
             *(lastmovement) = move; //put new move at end of array
             lastmove = move; // save move for next iteration
         }
-        if(move.angleDegrees == lastmove.angleDegrees && move.direction == lastmove.direction){
-                
-        }
         else 
-            return; // return from function if array is full
+            return lastmovement; // return from function if array is full
         } while((index-1) != -1); // exit loop if String is over
-    return;
+    return lastmovement;
 }
 
 movement movementdecode(String movestring){
@@ -56,4 +61,16 @@ movement movementdecode(String movestring){
         return mymovement;
     }
     return mymovement;
+}
+
+enum motor checkOpposite(enum motor axes1, enum motor axes2){
+    if ((axes1 == front && axes2 == back) || (axes1 == back && axes2 == front))
+        return frontBack;
+    else if((axes1 == up && axes2 == down) || (axes1 == down && axes2 == up))
+        return upDown;
+    else if((axes1 == left && axes2 == right) || (axes1 == right && axes2 == left))
+        return leftRight;
+    else 
+        return none;
+  
 }

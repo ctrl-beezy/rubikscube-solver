@@ -15,38 +15,12 @@ void Schritt(int Zeit){
 }
 
 void Fahren(){
-   for(int i=0; i<Rotationen; i++){
-      for(int i=0; i<250; i++){
-        if(cnt1 < 20)
-        {
-          cnt1++;
-          Schritt(Zeit);
-        }
-        else if(cnt1 = 20)
-        {
-          cnt1 = 0;
-          Zeit--;
-          Schritt(Zeit);
-        }
-      }
-      for(int i=0; i<400; i++){
-        Schritt(Zeit);
-      }
-      for(int i=0; i<200; i++){
-        if(cnt1 < 20)
-        {
-          cnt1++;
-          Schritt(Zeit);
-        }
-        else if(cnt1 = 20)
-        {
-          cnt1 = 0;
-          Zeit++;
-          Schritt(Zeit);
-        }
-      }
-   Drehungen++;
+  for (int j=0; j<Rotationen; j++){ 
+    for(int i=0; i<(3300); i++){
+      Schritt(Zeit);    
+
    }
+  }   
 }
 
 void Schritt_vor() {
@@ -63,15 +37,15 @@ void leseSchritt(String string){
   Rotationen = 1;                             //default Wert   
   //digitalWrite(EN1, LOW);
   switch (string[0]) {                        //??? ansteuern
-    case 'F': digitalWrite(EN6, LOW);
+    case 'F': digitalWrite(EN2, LOW);
     break;
-    case 'R': digitalWrite(EN4, LOW);
+    case 'R': digitalWrite(EN6, LOW);
     break;
-    case 'B': digitalWrite(EN1, LOW);
+    case 'B': digitalWrite(EN5, LOW);
     break;
-    case 'U': digitalWrite(EN2, LOW);
+    case 'U': digitalWrite(EN1, LOW);
     break;
-    case 'L': digitalWrite(EN5, LOW);
+    case 'L': digitalWrite(EN4, LOW);
     break;
     case 'D': digitalWrite(EN3, LOW);
     break;         

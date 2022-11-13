@@ -1,4 +1,4 @@
-#include "stepContr.hpp"
+#include "motorContr.hpp"
 #include <Wire.h>
 
 #define DIR 10
@@ -10,7 +10,7 @@
 #define EN5 6
 #define EN6 7
 
-String Buffer;                                    //String erstellen, um serielle Daten Zwischenzuspeichern
+String Buffer;                                  //String erstellen, um serielle Daten Zwischenzuspeichern
 int Rotationen = 0;
 bool busy = false;
 int Zeit = 100;
@@ -51,5 +51,3 @@ void Schritt_rueck() {
     digitalWrite(DIR, HIGH);
     Fahren();
 }
-
-

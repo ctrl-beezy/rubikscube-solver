@@ -4,7 +4,7 @@
 volatile String Buffer;                                    //String erstellen, um serielle Daten Zwischenzuspeichern
 int Rotationen = 0;
 bool busy = false;
-int Zeit = 220;
+int Zeit = 60;
 int cnt1 = 0;
 int Drehungen = 0;
 
