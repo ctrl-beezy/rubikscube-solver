@@ -13,17 +13,18 @@ movement* cubeparser(movement* lastmovement, String inputString){ // loop over i
         if(move.angleDegrees == lastmove.angleDegrees && move.direction == lastmove.direction){
             if (checkOpposite(move.axes, lastmove.axes) != none){
                 lastmovement->axes = checkOpposite(move.axes,lastmove.axes);
-                continue;
             }
 
         }
-        if ((lastmovement+1)){ // check if array is full
+        else if ((lastmovement+1)){ // check if array is full
             lastmovement += 1; //increment array
             *(lastmovement) = move; //put new move at end of array
             lastmove = move; // save move for next iteration
         }
-        else 
+        else { 
             return lastmovement; // return from function if array is full
+        }
+            index = inputString.indexOf(' ',index)+1;
         } while((index-1) != -1); // exit loop if String is over
     return lastmovement;
 }
@@ -55,7 +56,7 @@ movement movementdecode(String movestring){
         mymovement.direction = ccw;
         return mymovement;
     }
-    if ('0' <= movestring[1] <= '9'){
+    if ('0' <= movestring[1] && movestring[1] <= '9'){
         mymovement.angleDegrees = 90 * uint16_t(movestring[1] - '0');
         mymovement.direction = cw;
         return mymovement;
