@@ -1,8 +1,8 @@
 #include "motorContr.hpp"
 #include <Wire.h>
 
-#define DIR 10
-#define STEP 16
+#define DIR 16
+#define STEP 10
 #define EN1 2
 #define EN2 3
 #define EN3 4
@@ -13,7 +13,7 @@
 String Buffer;                                  //String erstellen, um serielle Daten Zwischenzuspeichern
 int Rotationen = 0;
 bool busy = false;
-int Zeit = 100;
+int Zeit = 50;
 int cnt1 = 0;
 int Drehungen = 0;
 
@@ -36,18 +36,8 @@ void Schritt(int Zeit){
 
 void Fahren(){
    for(int i=0; i<Rotationen; i++){
-      for(int i=0; i<410; i++){
+      for(int i=0; i<3300; i++){
         Schritt(Zeit);
       }
 }
-}
-
-void Schritt_vor() {
-    digitalWrite(DIR, LOW);
-    Fahren();
-}
-
-void Schritt_rueck() {
-    digitalWrite(DIR, HIGH);
-    Fahren();
 }

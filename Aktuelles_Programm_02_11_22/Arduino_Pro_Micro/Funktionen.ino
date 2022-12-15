@@ -37,17 +37,17 @@ void leseSchritt(String string){
   Rotationen = 1;                             //default Wert   
   //digitalWrite(EN1, LOW);
   switch (string[0]) {                        //??? ansteuern
-    case 'F': digitalWrite(EN2, LOW);
+    case 'F': digitalWrite(EN1, LOW);
     break;
-    case 'R': digitalWrite(EN6, LOW);
+    case 'B': digitalWrite(EN2, LOW);
     break;
-    case 'B': digitalWrite(EN5, LOW);
+    case 'L': digitalWrite(EN3, LOW);
     break;
-    case 'U': digitalWrite(EN1, LOW);
+    case 'R': digitalWrite(EN4, LOW);
     break;
-    case 'L': digitalWrite(EN4, LOW);
+    case 'U': digitalWrite(EN5, LOW);
     break;
-    case 'D': digitalWrite(EN3, LOW);
+    case 'D': digitalWrite(EN6, LOW);
     break;         
     }
       

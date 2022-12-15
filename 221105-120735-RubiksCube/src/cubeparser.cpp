@@ -18,7 +18,7 @@ movement* cubeparser(movement* lastmovement, String inputString){ // loop over i
         }
         else if ((lastmovement+1)){ // check if array is full
             lastmovement += 1; //increment array
-            *(lastmovement) = move; //put new move at end of array
+            *lastmovement = move; //put new move at end of array
             lastmove = move; // save move for next iteration
         }
         else { 

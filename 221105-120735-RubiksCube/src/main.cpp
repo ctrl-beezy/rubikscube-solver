@@ -21,6 +21,7 @@ extern int cnt1;
 extern int Drehungen;
 movement movementList[50];
 movement* lastmovement;
+movement* amovement;
 
 void setup() {
     pinMode(DIR, OUTPUT);
@@ -35,6 +36,8 @@ void setup() {
     Serial.begin(115200);
     Serial.println("Dieses Programm aktzeptiert über die serielle Schnittstelle bereitgestellte Bewegungsstrings zum lösen eines Zauberwürfels");
     Serial.println("Es steuert dafür sechs Schrittmotortreiber an");
+    lastmovement = &movementList[0];
+    amovement = &movementList[0];
 }
 
 
@@ -42,11 +45,12 @@ void loop() {
   if ((Serial.available() > 0)) {        //Daten vorhanden
     Pin_Reset();
     Buffer = Serial.readString();               //einlesen
-    Buffer.trim();                              //entfernt Steuerzeichen etc.
-    lastmovement = cubeparser(movementList, Buffer);
+    Buffer.trim();                             //entfernt Steuerzeichen etc.
+    amovement = lastmovement;
+    lastmovement = cubeparser(lastmovement, Buffer);
    }
-   for(movement movement : movementList){
-    switch (movement.axes){
+   while(amovement != lastmovement){
+    switch (amovement->axes){
       case front : digitalWrite(EN1, LOW);
       break;
       case back : digitalWrite(EN2, LOW);
@@ -69,14 +73,15 @@ void loop() {
                       digitalWrite(EN6, LOW);
       default : Pin_Reset();
     }
-    if (movement.direction == cw){
+    if (amovement->direction == cw){
       digitalWrite(DIR, LOW);
     }
     else {
       digitalWrite(DIR, HIGH);
     }
     Fahren();
-    if (&movement == lastmovement)
-      break;
+    delay(200);
+    amovement++;
+    Pin_Reset();
   }
 }

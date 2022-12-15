@@ -4,12 +4,12 @@
 volatile String Buffer;                                    //String erstellen, um serielle Daten Zwischenzuspeichern
 int Rotationen = 0;
 bool busy = false;
-int Zeit = 60;
+int Zeit = 20;
 int cnt1 = 0;
 int Drehungen = 0;
 
-#define DIR 10
-#define STEP 16
+#define DIR 16
+#define STEP 10
 #define EN1 2
 #define EN2 3
 #define EN3 4
@@ -43,7 +43,7 @@ void loop() {
     substring = Buffer.substring(index, Buffer.indexOf(' ', index));
     Serial.println(substring);
     leseSchritt(substring);
-    delay(200);
+    delay(100);
     Pin_Reset();
     index = Buffer.indexOf(' ', index)+1;
     } while((index-1) != -1);
