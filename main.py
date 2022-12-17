@@ -228,8 +228,13 @@ def button_press(channel):
         return
 
 def main():
-    global capFront = cv2.VideoCapture(2)
-    global capBack = cv2.VideoCapture(0)
+    #global variable declarations
+    global capFront 
+    global capBack
+    global ser
+    
+    capFront = cv2.VideoCapture(2)
+    capBack = cv2.VideoCapture(0)
     if (not(capFront.isOpened()) or not(capBack.isOpened())):
         raise IOError('Kann Kamera nicht oeffnen')
     capFront.set(cv2.CAP_PROP_BRIGHTNESS,       130.0 )
@@ -245,7 +250,7 @@ def main():
     portList = serial_ports()
     if(len(portList) == 0):
         raise IOError('Fehler kann keinen seriellen Port finden')
-    global ser = serial.Serial()
+    ser = serial.Serial()
     ser.baudrate = 115200
     #print(portList)
     ser.port = portList[0]
