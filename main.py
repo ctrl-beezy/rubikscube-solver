@@ -6,6 +6,17 @@ import serial
 import sys
 import glob
 import time
+import random
+
+def scrambleCube():
+    random.seed()
+    sidesList = ['F', 'B', 'U', 'D', 'L', 'R', 'R2','F2', 'B2', 'U2', 'D2', 'L2', "F'", "B'", "U'", "D'", "L'", "R'"]
+    string = ""
+    for i in range(random.randrange(5, 20)):
+        string.append(random.choice(sidesList))
+        string.append(" ")
+    return string
+
 
 def serial_ports():
     """ Lists serial port names
@@ -104,7 +115,7 @@ def main():
                         [431, 40],
                         [351, 80], #UpCenter
                         [257, 95],
-                        [275, 37],
+                        [280, 37],
                         [250, 51],
                         [170, 80],
                         [131, 156], #Right
@@ -143,12 +154,12 @@ def main():
                         [100, 354], 
                         [193, 334], 
                         [295, 301], 
-                        [320, 390], #Down
+                        [322, 398], #Down
                         [411, 417], 
                         [480, 425], 
-                        [219, 413], 
+                        [224, 418], 
                         [322, 421], #DownCenter
-                        [380, 440],
+                        [395, 442],
                         [136, 431], 
                         [225, 439], 
                         [260, 453]])

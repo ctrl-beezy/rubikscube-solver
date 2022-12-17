@@ -16,7 +16,7 @@ void Schritt(int Zeit){
 
 void Fahren(){
   for (int j=0; j<Rotationen; j++){ 
-    for(int i=0; i<(3300); i++){
+    for(int i=0; i<(3310); i++){
       Schritt(Zeit);    
 
    }
