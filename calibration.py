@@ -4,6 +4,7 @@ import os
 import sys
 
 mylist = []
+capFront = cv.VideoCapture(0)
 
 def print_coord(event,x,y,flags,param):
     if event == cv.EVENT_LBUTTONDOWN:

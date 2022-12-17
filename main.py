@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 from kociemba import solve
-import matplotlib.pyplot as plt
 import serial
 import sys
 import glob
@@ -97,17 +96,22 @@ def getColors(ret, frame, mat):
 
 
 def main():
-    capFront = cv2.VideoCapture(1)
+    capFront = cv2.VideoCapture(2)
     capBack = cv2.VideoCapture(0)
-
-    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       150.0 )#0.50 default
-    capFront.set(cv2.CAP_PROP_CONTRAST,         100.0 )#0.15 default
-    capFront.set(cv2.CAP_PROP_SATURATION,       105.0 )#0.15 default
-    capBack.set(cv2.CAP_PROP_BRIGHTNESS,       150.0 )#0.50 default
-    capBack.set(cv2.CAP_PROP_CONTRAST,         100.0 )#0.15 default
-    capBack.set(cv2.CAP_PROP_SATURATION,       105.0 )#0.15 default
+    if (not(capFront.isOpened()) or not(capBack.isOpened())):
+        raise IOError('Kann Kamera nicht oeffnen')
+    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       130.0 )
+    capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
+    capFront.set(cv2.CAP_PROP_SATURATION,       115.0 )
+    
+    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      130.0 )
+    capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
+    capBack.set(cv2.CAP_PROP_SATURATION,      115.0 )
+    for i in range(9):
+        ret, frame = capBack.read()
+        ret, frame = capFront.read()
     retB, frameBack = capBack.read()
-    retF, frameFront = capFront.read() 
+    retF, frameFront = capFront.read()
 
     matBack = np.array([[496, 60], #Up
                         [459, 80],
@@ -124,7 +128,7 @@ def main():
                         [138, 257],
                         [246, 279], #RightCenter
                         [332, 349],
-                        [165, 386],
+                        [180, 386],
                         [237, 402],
                         [331, 448],
                         [419, 220], #Back
@@ -161,20 +165,33 @@ def main():
                         [322, 421], #DownCenter
                         [395, 442],
                         [136, 431], 
-                        [225, 439], 
+                        [225, 444], 
                         [260, 453]])
     codeB = getColors(retB, frameBack, matBack)
     codeF = getColors(retF, frameFront, matFront )
     codeF[26] = 'X'
+    for i in range(27):
+        img3 = cv2.circle(frameFront,matFront[i],10,(255,0,0),1)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        img4 = cv2.putText(img3,codeF[i],matFront[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
+        img5 = cv2.circle(frameBack,matBack[i],10,(255,0,0),1)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        img6 = cv2.putText(img5,codeB[i],matBack[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
+    cv2.imshow('front',img4)
+    cv2.imshow('back',img6)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     colorCode = codeB[0:18] + codeF[0:9] + codeF[18:27] + codeF[9:18] + codeB[18:27]
     #len(colorCode)
     #print(colorCode)
 
     portList = serial_ports()
+    if(len(portList) == 0):
+        raise IOError('Fehler kann keinen seriellen Port finden')
     ser = serial.Serial()
     ser.baudrate = 115200
     #print(portList)
-    ser.port = portList[1]
+    ser.port = portList[0]
     ser.open()
     colors = ['W','B','R','O','G','Y']
     for color in colors:
