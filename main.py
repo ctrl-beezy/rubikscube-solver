@@ -6,6 +6,8 @@ import sys
 import glob
 import time
 import random
+import RPi.GPIO as GPIO
+
 
 def scrambleCube():
     random.seed()
@@ -64,55 +66,36 @@ def guessColor( v, r ):
             return code
     return "X"
 
-def getColors(ret, frame, mat):
-    if ret:
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+def getColors(frame, mat):
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        #colorSamplesB = []
-        code = []
-        w = 8
-        h = 8
+    #colorSamplesB = []
+    code = []
+    w = 8
+    h = 8
 
-        for lines in mat:
-            x1,y1 = lines
-            blockHSV = hsv[(y1-h//2):(y1+h//2),(x1-w//2):(x1+w//2)]
-            block_h = blockHSV[:,:, 0 ]
-            block_s = blockHSV[:,:, 1 ]
-            block_v = blockHSV[:,:, 2 ]
-            blockRGB = rgb[(y1-h//2):(y1+h//2),(x1-w//2):(x1+w//2)]
-            block_r = blockRGB[:,:, 0 ]
-            block_g = blockRGB[:,:, 1 ]
-            block_b = blockRGB[:,:, 2 ]
-            #print(block_h)
-            clrh = np.array((np.median(block_h),np.median( block_s ), np.median( block_v ))) 
-            clrr = np.array((np.median(block_r),np.median( block_g ), np.median( block_b ))) 
+    for lines in mat:
+        x1,y1 = lines
+        blockHSV = hsv[(y1-h//2):(y1+h//2),(x1-w//2):(x1+w//2)]
+        block_h = blockHSV[:,:, 0 ]
+        block_s = blockHSV[:,:, 1 ]
+        block_v = blockHSV[:,:, 2 ]
+        blockRGB = rgb[(y1-h//2):(y1+h//2),(x1-w//2):(x1+w//2)]
+        block_r = blockRGB[:,:, 0 ]
+        block_g = blockRGB[:,:, 1 ]
+        block_b = blockRGB[:,:, 2 ]
+        #print(block_h)
+        clrh = np.array((np.median(block_h),np.median( block_s ), np.median( block_v ))) 
+        clrr = np.array((np.median(block_r),np.median( block_g ), np.median( block_b ))) 
                 
-            #colorSamplesB.append(clrh)
-            code.append(guessColor(clrh,clrr))
+        #colorSamplesB.append(clrh)
+        code.append(guessColor(clrh,clrr))
         return code
-    return
 
 
 
-def main():
-    capFront = cv2.VideoCapture(2)
-    capBack = cv2.VideoCapture(0)
-    if (not(capFront.isOpened()) or not(capBack.isOpened())):
-        raise IOError('Kann Kamera nicht oeffnen')
-    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       130.0 )
-    capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
-    capFront.set(cv2.CAP_PROP_SATURATION,       115.0 )
-    
-    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      130.0 )
-    capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
-    capBack.set(cv2.CAP_PROP_SATURATION,      115.0 )
-    for i in range(9):
-        ret, frame = capBack.read()
-        ret, frame = capFront.read()
-    retB, frameBack = capBack.read()
-    retF, frameFront = capFront.read()
-
+def solveCube(frameFront, frameBack):
     matBack = np.array([[496, 60], #Up
                         [459, 80],
                         [363, 114],
@@ -167,8 +150,8 @@ def main():
                         [136, 431], 
                         [225, 444], 
                         [260, 453]])
-    codeB = getColors(retB, frameBack, matBack)
-    codeF = getColors(retF, frameFront, matFront )
+    codeB = getColors(frameBack, matBack)
+    codeF = getColors(frameFront, matFront)
     codeF[26] = 'X'
     for i in range(27):
         img3 = cv2.circle(frameFront,matFront[i],10,(255,0,0),1)
@@ -185,20 +168,12 @@ def main():
     #len(colorCode)
     #print(colorCode)
 
-    portList = serial_ports()
-    if(len(portList) == 0):
-        raise IOError('Fehler kann keinen seriellen Port finden')
-    ser = serial.Serial()
-    ser.baudrate = 115200
-    #print(portList)
-    ser.port = portList[0]
-    ser.open()
     colors = ['W','B','R','O','G','Y']
     for color in colors:
         if colorCode.count(color) == 8:
             colorCode = list(map(lambda x: x.replace('X', color), colorCode))
-        if colorCode.count(color) >= 10:
-            ser.write('F U B D L R'.encode())
+        #if colorCode.count(color) >= 10:
+            #ser.write('F U B D L R'.encode())
     colorDict = {
         colorCode[4] : 'U',
         colorCode[13] : 'R',
@@ -220,16 +195,73 @@ def main():
         cnt = cubestring.count(side)
         if cnt != 9:
             break
-
+    solveString = ""
     if cnt == 9:
         solveString = solve(cubestring)
         print(solveString)
-        ser.write(solveString.encode())
+        #ser.write(solveString.encode())
+    return(solveString)
 
-    time.sleep(8)
+# Define the function to run when the button is pressed
+def button_press(channel):
+    # Start a timer
+    start_time = time.time()
+
+    # Wait for the button to be released
+    while GPIO.input(channel) == GPIO.LOW:
+        pass
+
+    # Stop the timer and calculate the duration of the press
+    end_time = time.time()
+    duration = end_time - start_time
+
+    # Determine if the press was long or short based on the duration
+    if duration < 5:
+        retB, frameBack = capBack.read()
+        retF, frameFront = capFront.read()
+        if retB and retF:
+            solveString, cubestring = solveCube(frameFront, frameBack)
+            ser.write(solveString.encode())
+            return
+    else:
+        ser.write(scrambleCube())
+        return
+
+def main():
+    global capFront = cv2.VideoCapture(2)
+    global capBack = cv2.VideoCapture(0)
+    if (not(capFront.isOpened()) or not(capBack.isOpened())):
+        raise IOError('Kann Kamera nicht oeffnen')
+    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       130.0 )
+    capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
+    capFront.set(cv2.CAP_PROP_SATURATION,       115.0 )
+    
+    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      130.0 )
+    capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
+    capBack.set(cv2.CAP_PROP_SATURATION,      115.0 )
+    for i in range(9):
+        ret, frame = capBack.read()
+        ret, frame = capFront.read()
+    portList = serial_ports()
+    if(len(portList) == 0):
+        raise IOError('Fehler kann keinen seriellen Port finden')
+    global ser = serial.Serial()
+    ser.baudrate = 115200
+    #print(portList)
+    ser.port = portList[0]
+    ser.open()
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=200)
+    
+    while True:
+        pass
+
     ser.close()
     capFront.release()
     capBack.release()
+
 
 if __name__ == "__main__":
     main()
