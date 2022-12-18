@@ -68,7 +68,7 @@ def guessColor( v, r ):
         if ((min[0] <= v[0] <= max[0]) and (min[1] <= v[1] <= max[1]) and (min[2] <= v[2] <= max[2])):
             if code == 'R':
                 #print(r)
-                if (r[0] <= 100.0 or (r[0] <= 144.0 and r[1] >= 70.0 and  r[2] >= 70.0) or (r[0] <= 180 and r[1] >= 105 and r[2] >= 105)  or (r[0] <= 200 and r[1] >= 120.0 and r[2] >= 130.0 or (r[0] > 150 and r[0] <= 1.6*r[1] and r[0] <= 1.8*(r[2])))):
+                if (r[0] <= 100.0 or (r[0] <= 144.0 and r[1] >= 70.0 and  r[2] >= 70.0) or (r[0] <= 180 and r[1] >= 105 and r[2] >= 105)  or (r[0] <= 200 and r[1] >= 120.0 and r[2] >= 130.0 or (r[0] > 150 and r[0] <= 1.8*r[1] and r[0] <= 1.8*(r[2])))):
                     code = 'O'
             if (v[1] < 80 and v[2] > 200):
                     code ='W'
@@ -98,7 +98,7 @@ def getColors(frame, mat):
         clrh = np.array((np.median(block_h),np.median( block_s ), np.median( block_v ))) 
         clrr = np.array((np.median(block_r),np.median( block_g ), np.median( block_b ))) 
                 
-        colorSamples.append(clrh)
+        colorSamples.append(clrr)
         code.append(guessColor(clrh,clrr))
     return code, colorSamples
 
@@ -113,14 +113,14 @@ def solveCube(frameFront, frameBack):
                         [257, 95],
                         [281, 31],
                         [250, 51],
-                        [170, 80],
+                        [165, 80],
                         [131, 156], #Right
                         [221, 183],
                         [325, 219],
                         [138, 257],
                         [246, 279], #RightCenter
                         [332, 349],
-                        [185, 394],
+                        [178, 394],
                         [237, 402],
                         [331, 448],
                         [419, 220], #Back
@@ -131,14 +131,14 @@ def solveCube(frameFront, frameBack):
                         [542, 220],
                         [427, 434],
                         [482, 376],
-                        [524, 355]])
+                        [524, 351]])
     matFront = np.array([[376, 58], #Front
                         [450, 107],
                         [500, 128],
                         [382, 173], 
                         [444, 239], #FrontCenter
                         [523, 273], 
-                        [398, 308], 
+                        [395, 308], 
                         [473, 338], 
                         [532, 376], 
                         [119, 131], #Left
@@ -164,9 +164,10 @@ def solveCube(frameFront, frameBack):
     #print(codeF)
     #print(codeB)
     codeF[26] = 'X'
+    #codeB[8] = 'X'
     #for i in range(27):
-        #if codeB[i] == 'X':
-            #print(colorSamplesB[i])
+        #if codeF[i] == 'R':
+        #    print(colorSamplesF[i])
         #img3 = cv2.circle(frameFront,matFront[i],10,(255,0,0),1)
         #font = cv2.FONT_HERSHEY_SIMPLEX
         #img4 = cv2.putText(img3,codeF[i],matFront[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
@@ -180,11 +181,21 @@ def solveCube(frameFront, frameBack):
     colorCode = codeB[0:18] + codeF[0:9] + codeF[18:27] + codeF[9:18] + codeB[18:27]
     #len(colorCode)
     #print(colorCode)
-
+    colorCode1 = colorCode
+    colorCode2 = colorCode
     colors = ['W','B','R','O','G','Y']
-    for color in colors:
-        if colorCode.count(color) == 8:
-            colorCode = list(map(lambda x: x.replace('X', color), colorCode))
+    colorsReverse = list(reversed(colors))
+    for i in range(54):
+        if colorCode[i] == 'X':
+            for color in colors:
+                if colorCode1.count(color) <= 8:
+                    colorCode1[i] = color
+                    break
+            for color in colorsReverse:
+                if colorCode2.count(color) <= 8:
+                    colorCode2[i] = color
+
+
         #if colorCode.count(color) >= 10:
             #ser.write('F U B D L R'.encode())
     colorDict = {
@@ -196,24 +207,37 @@ def solveCube(frameFront, frameBack):
         colorCode[49] : 'B'
     }
 
-    cubestring = ""
-    colorstring = ""
-    colorstring = colorstring.join(colorCode)
-    cubestring = cubestring.join(map(colorDict.get,colorCode,colorCode))
+    cubestring1 = ""
+    cubestring2 = ""
+    colorstring1 = ""
+    colorstring2 = ""
+    colorstring1 = colorstring1.join(colorCode1)
+    colorstring2 = colorstring2.join(colorCode2)
+    cubestring1 = cubestring1.join(map(colorDict.get,colorCode1,colorCode1))
+    cubestring2 = cubestring2.join(map(colorDict.get,colorCode2,colorCode2))
     for color in colorDict:
-        print(color, '->', colorDict[color], cubestring.count(colorDict[color]))
-    print ('ColorString:',colorstring)
-    print('SidesString:', cubestring)
+        print(color, '->', colorDict[color], cubestring1.count(colorDict[color]))
+    print ('ColorString:',colorstring1)
+    if cubestring1 == cubestring2:
+        print('SidesString:', cubestring1)
+    else:
+        print('SidesString:', cubeString1 ,cubeString2)
     
-    for side in cubestring:
-        cnt = cubestring.count(side)
+    cnt = 0
+    for side in cubestring1:
+        cnt = cubestring1.count(side)
         if cnt != 9:
             break
     solveString = ""
     if cnt == 9:
-        solveString = solve(cubestring)
-        print('Moves to Solve:',solveString)
-        #ser.write(solveString.encode())
+        try:
+            solveString = solve(cubestring1)
+            print('Moves to Solve:',solveString)
+            #ser.write(solveString.encode())
+        except:
+            solveString = solve(cubestring2)
+            print('Moves to Solve:', solveString)
+
     return(solveString)
 
 # Define the function to run when the button is pressed
@@ -242,7 +266,7 @@ def button_press(channel):
             if solveString :
                 blinkLed(17,6,0.25)
                 ser.write(solveString.encode())
-                time.sleep(6)
+                time.sleep(7)
             else:
                 print("Fehler Scan nicht korrekt. Versuche es erneut")
                 blinkLed(17,12,0.125)
@@ -252,7 +276,7 @@ def button_press(channel):
         scrambleString = scrambleCube()
         print('Scramble Moves:',scrambleString)
         ser.write(scrambleString.encode())
-        time.sleep(5)
+        time.sleep(6)
 
 def main():
     #global variable declarations
@@ -260,18 +284,18 @@ def main():
     global capBack
     global ser
     
-    logfile = open("logfile.txt","w")
-    sys.stdout = logfile
+    #logfile = open("logfile.txt","w")
+    #sys.stdout = logfile
     
     capFront = cv2.VideoCapture(2)
     capBack = cv2.VideoCapture(0)
     if (not(capFront.isOpened()) or not(capBack.isOpened())):
         raise IOError('Kann Kamera nicht oeffnen')
-    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       150.0 )
-    capFront.set(cv2.CAP_PROP_CONTRAST,         100.0 )
-    capFront.set(cv2.CAP_PROP_SATURATION,       110.0 )
+    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       140.0 )
+    capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
+    capFront.set(cv2.CAP_PROP_SATURATION,       120.0 )
     
-    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      150.0 )
+    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      140.0 )
     capBack.set(cv2.CAP_PROP_CONTRAST,        100.0 )
     capBack.set(cv2.CAP_PROP_SATURATION,      110.0 )
     for i in range(9):
@@ -292,7 +316,7 @@ def main():
     GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(17, GPIO.OUT)
     GPIO.output(17, GPIO.LOW)
-    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=3500)
+    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=9000)
     while True:
         ret, Frame = capFront.read()
         ret, Frame = capBack.read()
