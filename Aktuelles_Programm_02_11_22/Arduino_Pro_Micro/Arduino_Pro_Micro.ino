@@ -18,6 +18,7 @@ int Drehungen = 0;
 #define EN6 7
 
 void setup() {
+    Serial.begin(115200);
     pinMode(DIR, OUTPUT);
     pinMode(STEP, OUTPUT);
     pinMode(EN1, OUTPUT);
