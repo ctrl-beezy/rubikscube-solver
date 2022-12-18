@@ -8,14 +8,21 @@ import time
 import random
 import RPi.GPIO as GPIO
 
+def blinkLed(pin, numBlinks, cycleTime):
+    pauseTime = cycleTime/2
+    for i in range(numBlinks):
+        GPIO.output(pin, GPIO.HIGH)
+        time.sleep(pauseTime)
+        GPIO.output(pin, GPIO.LOW)
+        time.sleep(pauseTime)
+    return
 
 def scrambleCube():
     random.seed()
     sidesList = ['F', 'B', 'U', 'D', 'L', 'R', 'R2','F2', 'B2', 'U2', 'D2', 'L2', "F'", "B'", "U'", "D'", "L'", "R'"]
     string = ""
     for i in range(random.randrange(5, 20)):
-        string.append(random.choice(sidesList))
-        string.append(" ")
+        string =  string + random.choice(sidesList) + " "
     return string
 
 
@@ -54,7 +61,7 @@ def guessColor( v, r ):
     ( np.array([20.5, 40.0, 35.0]),np.array([45.0, 255.0, 255.0]),  "Y" ),
     ( np.array([45.5, 35.0, 40.0]), np.array([84.0, 255.0, 255.0]),"G" ),
     (np.array([0.0, 0.0, 105.0]), np.array([180.0, 60.0, 255.0]) ,"W" ),
-    ( np.array([160.0, 60.0,  80.0]), np.array([180.0, 255.0, 255.0]),"R" )
+    ( np.array([152.0, 60.0,  80.0]), np.array([180.0, 255.0, 255.0]),"R" )
     )
 
     for min, max, code in colorFilter:
@@ -70,7 +77,7 @@ def getColors(frame, mat):
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    #colorSamplesB = []
+    colorSamples = []
     code = []
     w = 8
     h = 8
@@ -89,9 +96,9 @@ def getColors(frame, mat):
         clrh = np.array((np.median(block_h),np.median( block_s ), np.median( block_v ))) 
         clrr = np.array((np.median(block_r),np.median( block_g ), np.median( block_b ))) 
                 
-        #colorSamplesB.append(clrh)
+        colorSamples.append(clrh)
         code.append(guessColor(clrh,clrr))
-        return code
+    return code, colorSamples
 
 
 
@@ -111,7 +118,7 @@ def solveCube(frameFront, frameBack):
                         [138, 257],
                         [246, 279], #RightCenter
                         [332, 349],
-                        [180, 386],
+                        [185, 390],
                         [237, 402],
                         [331, 448],
                         [419, 220], #Back
@@ -150,20 +157,24 @@ def solveCube(frameFront, frameBack):
                         [136, 431], 
                         [225, 444], 
                         [260, 453]])
-    codeB = getColors(frameBack, matBack)
-    codeF = getColors(frameFront, matFront)
+    codeB, colorSamplesB = getColors(frameBack, matBack)
+    codeF, colorSamplesF = getColors(frameFront, matFront)
+    #print(codeF)
+    #print(codeB)
     codeF[26] = 'X'
-    for i in range(27):
-        img3 = cv2.circle(frameFront,matFront[i],10,(255,0,0),1)
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        img4 = cv2.putText(img3,codeF[i],matFront[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
-        img5 = cv2.circle(frameBack,matBack[i],10,(255,0,0),1)
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        img6 = cv2.putText(img5,codeB[i],matBack[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
-    cv2.imshow('front',img4)
-    cv2.imshow('back',img6)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #for i in range(27):
+        #if codeB[i] == 'X':
+            #print(colorSamplesB[i])
+        #img3 = cv2.circle(frameFront,matFront[i],10,(255,0,0),1)
+        #font = cv2.FONT_HERSHEY_SIMPLEX
+        #img4 = cv2.putText(img3,codeF[i],matFront[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
+        #img5 = cv2.circle(frameBack,matBack[i],10,(255,0,0),1)
+        #font = cv2.FONT_HERSHEY_SIMPLEX
+        #img6 = cv2.putText(img5,codeB[i],matBack[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
+    #cv2.imshow('front',img4)
+    #cv2.imshow('back',img6)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     colorCode = codeB[0:18] + codeF[0:9] + codeF[18:27] + codeF[9:18] + codeB[18:27]
     #len(colorCode)
     #print(colorCode)
@@ -189,7 +200,8 @@ def solveCube(frameFront, frameBack):
     cubestring = cubestring.join(map(colorDict.get,colorCode,colorCode))
     for color in colorDict:
         print(color, '->', colorDict[color], cubestring.count(colorDict[color]))
-    print (colorstring, cubestring)
+    print ('ColorString:',colorstring)
+    print('SidesString:', cubestring)
     
     for side in cubestring:
         cnt = cubestring.count(side)
@@ -198,34 +210,51 @@ def solveCube(frameFront, frameBack):
     solveString = ""
     if cnt == 9:
         solveString = solve(cubestring)
-        print(solveString)
+        print('Moves to Solve:',solveString)
         #ser.write(solveString.encode())
     return(solveString)
 
 # Define the function to run when the button is pressed
 def button_press(channel):
-    # Start a timer
-    start_time = time.time()
+    GPIO.setwarnings(False)
+    try:
+        # Start a timer
+        start_time = time.time()
 
-    # Wait for the button to be released
-    while GPIO.input(channel) == GPIO.LOW:
+        # Wait for the button to be released
+        while GPIO.input(channel) == GPIO.LOW:
+            pass
+
+        # Stop the timer and calculate the duration of the press
+        end_time = time.time()
+        duration = end_time - start_time
+
+        # Determine if the press was long or short based on the duration
+        if duration < 2:
+            print('solving cube')
+            blinkLed(17,3,0.25)
+            retB, frameBack = capBack.read()
+            retF, frameFront = capFront.read()
+            if retB and retF:
+                solveString = solveCube(frameFront, frameBack)
+                if solveString :
+                    blinkLed(17,6,0.25)
+                    ser.write(solveString.encode())
+                    time.sleep(6)
+                else:
+                    print("Fehler Scan nicht korrekt. Versuche es erneut")
+                    blinkLed(17,12,0.125)
+        else:
+            print('scrambling cube')
+            blinkLed(17,5,1)
+            scrambleString = scrambleCube()
+            print('Scramble Moves:',scrambleString)
+            ser.write(scrambleString.encode())
+            time.sleep(5)
         pass
-
-    # Stop the timer and calculate the duration of the press
-    end_time = time.time()
-    duration = end_time - start_time
-
-    # Determine if the press was long or short based on the duration
-    if duration < 5:
-        retB, frameBack = capBack.read()
-        retF, frameFront = capFront.read()
-        if retB and retF:
-            solveString, cubestring = solveCube(frameFront, frameBack)
-            ser.write(solveString.encode())
-            return
-    else:
-        ser.write(scrambleCube())
-        return
+    finally:
+        GPIO.setwarnings(True)
+    return
 
 def main():
     #global variable declarations
@@ -233,17 +262,20 @@ def main():
     global capBack
     global ser
     
+    logfile = open("logfile.txt","w")
+    sys.stdout = logfile
+    
     capFront = cv2.VideoCapture(2)
     capBack = cv2.VideoCapture(0)
     if (not(capFront.isOpened()) or not(capBack.isOpened())):
         raise IOError('Kann Kamera nicht oeffnen')
-    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       130.0 )
+    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       145.0 )
     capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
-    capFront.set(cv2.CAP_PROP_SATURATION,       115.0 )
+    capFront.set(cv2.CAP_PROP_SATURATION,       110.0 )
     
-    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      130.0 )
+    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      145.0 )
     capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
-    capBack.set(cv2.CAP_PROP_SATURATION,      115.0 )
+    capBack.set(cv2.CAP_PROP_SATURATION,      110.0 )
     for i in range(9):
         ret, frame = capBack.read()
         ret, frame = capFront.read()
@@ -252,13 +284,17 @@ def main():
         raise IOError('Fehler kann keinen seriellen Port finden')
     ser = serial.Serial()
     ser.baudrate = 115200
-    #print(portList)
+    print(portList)
     ser.port = portList[0]
     ser.open()
-
+   
+    #setup GPIO PINS
+    # Pin 4 is Push Button, Pin 17 i status Led
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=200)
+    GPIO.setup(17, GPIO.OUT)
+    GPIO.output(17, GPIO.LOW)
+    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=500)
     
     while True:
         pass
@@ -266,6 +302,7 @@ def main():
     ser.close()
     capFront.release()
     capBack.release()
+    GPIO.cleanup()
 
 
 if __name__ == "__main__":
