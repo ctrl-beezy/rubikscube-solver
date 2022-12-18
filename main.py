@@ -21,7 +21,7 @@ def scrambleCube():
     random.seed()
     sidesList = ['F', 'B', 'U', 'D', 'L', 'R', 'R2','F2', 'B2', 'U2', 'D2', 'L2', "F'", "B'", "U'", "D'", "L'", "R'"]
     string = ""
-    for i in range(random.randrange(5, 20)):
+    for i in range(random.randrange(15, 25)):
         string =  string + random.choice(sidesList) + " "
     return string
 
@@ -58,9 +58,9 @@ def guessColor( v, r ):
     colorFilter = (
     ( np.array([85.0, 75.0, 60.0]), np.array([150.0, 225.0, 255.0]),'B'),
     ( np.array([0.0, 70.0, 70.0]), np.array([20.0, 255.0, 255.0]),"O" ),
-    ( np.array([20.5, 40.0, 35.0]),np.array([45.0, 255.0, 255.0]),  "Y" ),
-    ( np.array([45.5, 35.0, 40.0]), np.array([84.0, 255.0, 255.0]),"G" ),
-    (np.array([0.0, 0.0, 105.0]), np.array([180.0, 60.0, 255.0]) ,"W" ),
+    ( np.array([20.5, 40.0, 35.0]),np.array([50.0, 255.0, 255.0]),  "Y" ),
+    ( np.array([50.5, 35.0, 40.0]), np.array([84.0, 255.0, 255.0]),"G" ),
+    (np.array([0.0, 0.0, 105.0]), np.array([180.0, 65.0, 255.0]) ,"W" ),
     ( np.array([152.0, 60.0,  80.0]), np.array([180.0, 255.0, 255.0]),"R" )
     )
 
@@ -68,8 +68,10 @@ def guessColor( v, r ):
         if ((min[0] <= v[0] <= max[0]) and (min[1] <= v[1] <= max[1]) and (min[2] <= v[2] <= max[2])):
             if code == 'R':
                 #print(r)
-                if (r[0] <= 100.0 or (r[0] <= 144.0 and r[1] >= 70.0 and  r[2] >= 70.0) or (r[0] <= 200 and r[1] >= 120.0 and r[2] >= 130.0)):
+                if (r[0] <= 100.0 or (r[0] <= 144.0 and r[1] >= 70.0 and  r[2] >= 70.0) or (r[0] <= 180 and r[1] >= 105 and r[2] >= 105)  or (r[0] <= 200 and r[1] >= 120.0 and r[2] >= 130.0 or (r[0] > 150 and r[0] <= 1.6*r[1] and r[0] <= 1.8*(r[2])))):
                     code = 'O'
+            if (v[1] < 80 and v[2] > 200):
+                    code ='W'
             return code
     return "X"
 
@@ -107,9 +109,9 @@ def solveCube(frameFront, frameBack):
                         [459, 80],
                         [363, 114],
                         [431, 40],
-                        [351, 80], #UpCenter
+                        [348, 77], #UpCenter
                         [257, 95],
-                        [280, 37],
+                        [281, 31],
                         [250, 51],
                         [170, 80],
                         [131, 156], #Right
@@ -118,7 +120,7 @@ def solveCube(frameFront, frameBack):
                         [138, 257],
                         [246, 279], #RightCenter
                         [332, 349],
-                        [185, 390],
+                        [185, 394],
                         [237, 402],
                         [331, 448],
                         [419, 220], #Back
@@ -132,10 +134,10 @@ def solveCube(frameFront, frameBack):
                         [524, 355]])
     matFront = np.array([[376, 58], #Front
                         [450, 107],
-                        [505, 128],
+                        [500, 128],
                         [382, 173], 
                         [444, 239], #FrontCenter
-                        [528, 273], 
+                        [523, 273], 
                         [398, 308], 
                         [473, 338], 
                         [532, 376], 
@@ -145,17 +147,17 @@ def solveCube(frameFront, frameBack):
                         [103, 269], 
                         [207, 229], #LeftCenter
                         [291, 171], 
-                        [100, 354], 
-                        [193, 334], 
-                        [295, 301], 
+                        [97, 354], 
+                        [182, 334], 
+                        [280, 301], 
                         [322, 398], #Down
-                        [411, 417], 
-                        [480, 425], 
+                        [420, 415], 
+                        [485, 430], 
                         [224, 418], 
                         [322, 421], #DownCenter
-                        [395, 442],
+                        [393, 438],
                         [136, 431], 
-                        [225, 444], 
+                        [225, 442], 
                         [260, 453]])
     codeB, colorSamplesB = getColors(frameBack, matBack)
     codeF, colorSamplesF = getColors(frameFront, matFront)
@@ -216,45 +218,41 @@ def solveCube(frameFront, frameBack):
 
 # Define the function to run when the button is pressed
 def button_press(channel):
-    GPIO.setwarnings(False)
-    try:
-        # Start a timer
-        start_time = time.time()
+    # Start a timer
+    start_time = time.time()
 
         # Wait for the button to be released
-        while GPIO.input(channel) == GPIO.LOW:
-            pass
+    while GPIO.input(channel) == GPIO.LOW:
+        pass
 
         # Stop the timer and calculate the duration of the press
-        end_time = time.time()
-        duration = end_time - start_time
+    end_time = time.time()
+    duration = end_time - start_time
 
         # Determine if the press was long or short based on the duration
-        if duration < 2:
-            print('solving cube')
-            blinkLed(17,3,0.25)
-            retB, frameBack = capBack.read()
-            retF, frameFront = capFront.read()
-            if retB and retF:
-                solveString = solveCube(frameFront, frameBack)
-                if solveString :
-                    blinkLed(17,6,0.25)
-                    ser.write(solveString.encode())
-                    time.sleep(6)
-                else:
-                    print("Fehler Scan nicht korrekt. Versuche es erneut")
-                    blinkLed(17,12,0.125)
-        else:
-            print('scrambling cube')
-            blinkLed(17,5,1)
-            scrambleString = scrambleCube()
-            print('Scramble Moves:',scrambleString)
-            ser.write(scrambleString.encode())
-            time.sleep(5)
-        pass
-    finally:
-        GPIO.setwarnings(True)
-    return
+    if duration < 3:
+        print('solving cube')
+        blinkLed(17,3,0.25)
+        #print(capFront.read())
+        retB, frameBack = capBack.read()
+        retF, frameFront = capFront.read()
+        #print(retB, retF)
+        if retB and retF:
+            solveString = solveCube(frameFront, frameBack)
+            if solveString :
+                blinkLed(17,6,0.25)
+                ser.write(solveString.encode())
+                time.sleep(6)
+            else:
+                print("Fehler Scan nicht korrekt. Versuche es erneut")
+                blinkLed(17,12,0.125)
+    else:
+        print('scrambling cube')
+        blinkLed(17,5,1)
+        scrambleString = scrambleCube()
+        print('Scramble Moves:',scrambleString)
+        ser.write(scrambleString.encode())
+        time.sleep(5)
 
 def main():
     #global variable declarations
@@ -269,12 +267,12 @@ def main():
     capBack = cv2.VideoCapture(0)
     if (not(capFront.isOpened()) or not(capBack.isOpened())):
         raise IOError('Kann Kamera nicht oeffnen')
-    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       145.0 )
-    capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
+    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       150.0 )
+    capFront.set(cv2.CAP_PROP_CONTRAST,         100.0 )
     capFront.set(cv2.CAP_PROP_SATURATION,       110.0 )
     
-    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      145.0 )
-    capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
+    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      150.0 )
+    capBack.set(cv2.CAP_PROP_CONTRAST,        100.0 )
     capBack.set(cv2.CAP_PROP_SATURATION,      110.0 )
     for i in range(9):
         ret, frame = capBack.read()
@@ -294,9 +292,10 @@ def main():
     GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(17, GPIO.OUT)
     GPIO.output(17, GPIO.LOW)
-    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=500)
-    
+    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=3500)
     while True:
+        ret, Frame = capFront.read()
+        ret, Frame = capBack.read()
         pass
 
     ser.close()
