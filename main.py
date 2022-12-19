@@ -58,7 +58,7 @@ def guessColor( v, r ):
     colorFilter = (
     ( np.array([85.0, 75.0, 60.0]), np.array([150.0, 225.0, 255.0]),'B'),
     ( np.array([0.0, 70.0, 70.0]), np.array([20.0, 255.0, 255.0]),"O" ),
-    ( np.array([20.5, 40.0, 35.0]),np.array([50.0, 255.0, 255.0]),  "Y" ),
+    ( np.array([20.5, 40.0, 35.0]),np.array([52.0, 255.0, 255.0]),  "Y" ),
     ( np.array([50.5, 35.0, 40.0]), np.array([84.0, 255.0, 255.0]),"G" ),
     (np.array([0.0, 0.0, 105.0]), np.array([180.0, 65.0, 255.0]) ,"W" ),
     ( np.array([152.0, 60.0,  80.0]), np.array([180.0, 255.0, 255.0]),"R" )
@@ -72,6 +72,9 @@ def guessColor( v, r ):
                     code = 'O'
             if (v[1] < 80 and v[2] > 200):
                     code ='W'
+            if code == 'Y':
+                if (v[0] >= 48 and v[1] > 100 and v[2] < 185):
+                    code = 'G'
             return code
     return "X"
 
@@ -98,7 +101,7 @@ def getColors(frame, mat):
         clrh = np.array((np.median(block_h),np.median( block_s ), np.median( block_v ))) 
         clrr = np.array((np.median(block_r),np.median( block_g ), np.median( block_b ))) 
                 
-        colorSamples.append(clrr)
+        colorSamples.append(clrh)
         code.append(guessColor(clrh,clrr))
     return code, colorSamples
 
@@ -164,10 +167,10 @@ def solveCube(frameFront, frameBack):
     #print(codeF)
     #print(codeB)
     codeF[26] = 'X'
-    #codeB[8] = 'X'
+    codeB[6] = 'X'
     #for i in range(27):
-        #if codeF[i] == 'R':
-        #    print(colorSamplesF[i])
+        #if codeB[i] == 'W':
+        #    print(colorSamplesB[i])
         #img3 = cv2.circle(frameFront,matFront[i],10,(255,0,0),1)
         #font = cv2.FONT_HERSHEY_SIMPLEX
         #img4 = cv2.putText(img3,codeF[i],matFront[i],font,0.8,(127,127,0),1,cv2.LINE_AA)
@@ -181,20 +184,25 @@ def solveCube(frameFront, frameBack):
     colorCode = codeB[0:18] + codeF[0:9] + codeF[18:27] + codeF[9:18] + codeB[18:27]
     #len(colorCode)
     #print(colorCode)
-    colorCode1 = colorCode
-    colorCode2 = colorCode
+    colorCode1 = colorCode.copy()
+    colorCode2 = colorCode.copy()
     colors = ['W','B','R','O','G','Y']
     colorsReverse = list(reversed(colors))
+    #print(colors)
+    #print(colorsReverse)
     for i in range(54):
-        if colorCode[i] == 'X':
-            for color in colors:
-                if colorCode1.count(color) <= 8:
-                    colorCode1[i] = color
+        if colorCode1[i] == 'X':
+            for color1 in colors:
+                if colorCode1.count(color1) <= 8:
+                    colorCode1[i] = color1
+                    print(i, color1)
                     break
-            for color in colorsReverse:
-                if colorCode2.count(color) <= 8:
-                    colorCode2[i] = color
-
+        if colorCode2[i] == 'X':
+            for color2 in colorsReverse:
+                if colorCode2.count(color2) <= 8:
+                    print(color2, i)
+                    colorCode2[i] = color2
+                    break
 
         #if colorCode.count(color) >= 10:
             #ser.write('F U B D L R'.encode())
@@ -218,10 +226,8 @@ def solveCube(frameFront, frameBack):
     for color in colorDict:
         print(color, '->', colorDict[color], cubestring1.count(colorDict[color]))
     print ('ColorString:',colorstring1)
-    if cubestring1 == cubestring2:
-        print('SidesString:', cubestring1)
-    else:
-        print('SidesString:', cubeString1 ,cubeString2)
+    print('SidesString1:', cubestring1)
+    print ('SidesString2:',cubestring2)
     
     cnt = 0
     for side in cubestring1:
@@ -242,6 +248,11 @@ def solveCube(frameFront, frameBack):
 
 # Define the function to run when the button is pressed
 def button_press(channel):
+    # wait because library debounce does not work
+    time.sleep(.01)
+    # if press was rising edge return
+    if (GPIO.input(channel) == GPIO.HIGH):
+            return
     # Start a timer
     start_time = time.time()
 
@@ -254,7 +265,7 @@ def button_press(channel):
     duration = end_time - start_time
 
         # Determine if the press was long or short based on the duration
-    if duration < 3:
+    if duration < 2:
         print('solving cube')
         blinkLed(17,3,0.25)
         #print(capFront.read())
@@ -272,7 +283,7 @@ def button_press(channel):
                 blinkLed(17,12,0.125)
     else:
         print('scrambling cube')
-        blinkLed(17,5,1)
+        blinkLed(17,3,1)
         scrambleString = scrambleCube()
         print('Scramble Moves:',scrambleString)
         ser.write(scrambleString.encode())
@@ -294,10 +305,14 @@ def main():
     capFront.set(cv2.CAP_PROP_BRIGHTNESS,       140.0 )
     capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
     capFront.set(cv2.CAP_PROP_SATURATION,       120.0 )
-    
+    #capFront.set(cv2.CAP_PROP_HUE, 1.0)
+    #capFront.set(cv2.CAP_PROP_FOCUS, 2.5) 
+    #print(capFront.get(cv2.CAP_PROP_GAMMA))
+
     capBack.set(cv2.CAP_PROP_BRIGHTNESS,      140.0 )
-    capBack.set(cv2.CAP_PROP_CONTRAST,        100.0 )
-    capBack.set(cv2.CAP_PROP_SATURATION,      110.0 )
+    capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
+    capBack.set(cv2.CAP_PROP_SATURATION,      120.0 )
+    #capBack.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     for i in range(9):
         ret, frame = capBack.read()
         ret, frame = capFront.read()
@@ -316,7 +331,7 @@ def main():
     GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(17, GPIO.OUT)
     GPIO.output(17, GPIO.LOW)
-    GPIO.add_event_detect(4, GPIO.FALLING, callback=button_press, bouncetime=9000)
+    GPIO.add_event_detect(4, GPIO.BOTH, callback=button_press, bouncetime=300)
     while True:
         ret, Frame = capFront.read()
         ret, Frame = capBack.read()
