@@ -14,9 +14,9 @@ void Schritt(int Zeit){
    delayMicroseconds(Zeit);
 }
 
-void Fahren(){
+void Fahren(int schritte){
   for (int j=0; j<Rotationen; j++){ 
-    for(int i=0; i<(3310); i++){
+    for(int i=0; i<(schritte); i++){
       Schritt(Zeit);    
 
    }
@@ -25,12 +25,15 @@ void Fahren(){
 
 void Schritt_vor() {
     digitalWrite(DIR, LOW);
-    Fahren();
+    int schritte = 3160;
+    Fahren(schritte);
 }
 
 void Schritt_rueck() {
     digitalWrite(DIR, HIGH);
-    Fahren();
+    int schritte = 3100;
+   
+    Fahren(schritte);
 }
 
 void leseSchritt(String string){
