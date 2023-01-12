@@ -55,16 +55,17 @@ def serial_ports():
     return result
 
 def guessColor( v, r ):
-    colorFilter = (
-    ( np.array([85.0, 75.0, 60.0]), np.array([150.0, 225.0, 255.0]),'B'),
-    ( np.array([0.0, 70.0, 70.0]), np.array([20.0, 255.0, 255.0]),"O" ),
-    ( np.array([20.5, 40.0, 35.0]),np.array([52.0, 255.0, 255.0]),  "Y" ),
-    ( np.array([50.5, 35.0, 40.0]), np.array([84.0, 255.0, 255.0]),"G" ),
-    (np.array([0.0, 0.0, 105.0]), np.array([180.0, 65.0, 255.0]) ,"W" ),
-    ( np.array([152.0, 60.0,  80.0]), np.array([180.0, 255.0, 255.0]),"R" )
+    # Centervalues of hue and corresponding char except for white 
+    HueCenters = (
+    ( 105.0,'B'),
+    ( 10.0,"O" ),
+    ( 35.0,  "Y" ),
+    ( 67.0,"G" ),
+    ( 165, "R" )
     )
 
-    for min, max, code in colorFilter:
+
+    for center, code in HueCenters:
         if ((min[0] <= v[0] <= max[0]) and (min[1] <= v[1] <= max[1]) and (min[2] <= v[2] <= max[2])):
             if code == 'R':
                 #print(r)
@@ -302,16 +303,16 @@ def main():
     capBack = cv2.VideoCapture(0)
     if (not(capFront.isOpened()) or not(capBack.isOpened())):
         raise IOError('Kann Kamera nicht oeffnen')
-    capFront.set(cv2.CAP_PROP_BRIGHTNESS,       140.0 )
-    capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
-    capFront.set(cv2.CAP_PROP_SATURATION,       120.0 )
+    #capFront.set(cv2.CAP_PROP_BRIGHTNESS,       140.0 )
+    #capFront.set(cv2.CAP_PROP_CONTRAST,         90.0 )
+    #capFront.set(cv2.CAP_PROP_SATURATION,       120.0 )
     #capFront.set(cv2.CAP_PROP_HUE, 1.0)
     #capFront.set(cv2.CAP_PROP_FOCUS, 2.5) 
     #print(capFront.get(cv2.CAP_PROP_GAMMA))
 
-    capBack.set(cv2.CAP_PROP_BRIGHTNESS,      140.0 )
-    capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
-    capBack.set(cv2.CAP_PROP_SATURATION,      120.0 )
+    #capBack.set(cv2.CAP_PROP_BRIGHTNESS,      140.0 )
+    #capBack.set(cv2.CAP_PROP_CONTRAST,        90.0 )
+    #capBack.set(cv2.CAP_PROP_SATURATION,      120.0 )
     #capBack.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     for i in range(9):
         ret, frame = capBack.read()
