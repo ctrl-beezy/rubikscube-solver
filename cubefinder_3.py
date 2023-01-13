@@ -4,9 +4,9 @@ import numpy as np
 from time import sleep, time
 
 capture = cv2.VideoCapture(0)
-cv2.namedWindow("Fig", cv2.WINDOW_NORMAL)
+cv2.namedWindow("Fig")
 ret, frame = capture.read()
-S1, S2 = frame.shape[:2]
+S2, S1 = frame.shape[:2]
 den = 2
 sg = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
 sg2 = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
@@ -153,7 +153,7 @@ def neighbors(f,s):
     if f==5 and s==7: return ((3,7),)
     if f==5 and s==8: return ((3,6),(0,8))
 
-def processColors(useRGB=True):
+def processColors(useRGB=False):
     global assigned, didassignments
 
     bestj = 0
@@ -214,7 +214,7 @@ def processColors(useRGB=True):
         # assign it
         done += 1
         assigned[bestj][besti] = matchesto
-        print(bestcon)
+        #print(bestcon)
 
         op = opposite[matchesto] # get the opposite side
         # remove this possibility from neighboring stickers
@@ -223,7 +223,7 @@ def processColors(useRGB=True):
         # of edge/corners made up of opposite sides
         ns = neighbors(bestj, besti)
         for neighbor in ns:
-            p = poss[neighbor]
+            p = list(poss[neighbor])
             if matchesto in p:
                 p.remove(matchesto)
             if op in p:
@@ -243,11 +243,11 @@ prev_grey = np.zeros((W,H), dtype=np.uint8)
 pyramid = np.zeros((W,H), dtype=np.uint8)
 prev_pyramid = np.zeros((W,H), dtype=np.uint8)
 
-ff= cv2.FONT_HERSHEY_SIMPLEX
 
 counter=0 #global iteration counter
 undetectednum=100
-stage=1 #1: learning colors
+
+#1: learning colors
 extract=False
 selected=0
 colors=[[] for i in range(6)]
@@ -274,20 +274,17 @@ while True:
     sgc = sg.copy()
 
     # Convert to grayscale
-    grey = cv2.cvtColor(sg, cv2.COLOR_RGB2GRAY)
+    grey = cv2.cvtColor(sg, cv2.COLOR_BGR2GRAY)
 
     # Tracking mode
     if tracking > 0:
         detected = 2
         # Compute optical flow
         features, status, track_error = cv2.calcOpticalFlowPyrLK(
-            prev_grey, grey, prev_pyramid, pyramid,
-            features,
-            (win_size, win_size), 3,
-            (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03),
-            flags)
+            prev_grey, grey, np.array(prev_feat),np.array(features))
         # Set back the points we keep
-        features = [p for (st, p) in zip(status, features) if st]
+        prev_feat = features
+        features = np.array([p for (st, p) in zip(status, features) if st],dtype="float32")
         if len(features) < 4:
             tracking = 0  # we lost it, restart search
         else:
@@ -337,19 +334,21 @@ while True:
             p1, p2 = lines[i][0][:2], lines[i][0][2:]
             for j in range(i+1, len(lines)):
                 q1, q2 = lines[j][0][:2], lines[j][0][2:]
+                
                 dd1 = sqrt((p2[0]-p1[0])**2+(p2[1]-p1[1])**2)
                 dd2 = sqrt((q2[0]-q1[0])**2+(q2[1]-q1[1])**2)
                 if max(dd1, dd2)/min(dd1, dd2) > 1.3:
                     continue
+                
                 matched = 0
                 if areclose(p1, q2, t):
-                    IT = (avg(p1, q2), p2, q1, dd1)
+                    IT = (avg(p1, q2), tuple(p2), tuple(q1), dd1)
                     matched += 1
                 if areclose(p2, q2, t):
-                    IT = (avg(p2, q2), p1, q1, dd1)
+                    IT = (avg(p2, q2), tuple(p1), tuple(q1), dd1)
                     matched += 1
                 if areclose(p1, q1, t):
-                    IT = (avg(p1, q1), p2, q2, dd1)
+                    IT = (avg(p1, q1), tuple(p2), tuple(q2), dd1)
                     matched += 1
                 if areclose(p2, q1, t):
                     IT = (avg(p2, q1), q2, p1, dd1)
@@ -433,7 +432,7 @@ while True:
                     continue
                 
                 #test position consistency.
-                q1, q2 = lines[j]
+                q1, q2 = lines[j][0][:2],lines[j][0][2:]
                 qwe = 0.06
 
                 #test one endpoint                
@@ -480,18 +479,20 @@ while True:
                 prevface = minps
                 if minch < 10:
                     succ += 1
+                    pt = prevface
                     detected = 1
 
             else:
                 succ = 0
 
-            if succ > 2:
+            if succ > 2 and 1:
                 pt = []
                 for i in [1.0/3, 2.0/3]:
                     for j in [1.0/3, 2.0/3]:
                         pt.append((p0[0] + i*v1[0] + j*v2[0], p0[1] + i*v1[1] + j*v2[1]))
 
-                features = pt
+                features = np.array(pt, dtype="float32")
+                prev_feat = features
                 tracking = 1
                 succ = 0
     else:
@@ -511,6 +512,7 @@ while True:
         prevface=[pt[0],pt[1],pt[2]]
 
     #use pt[] array to do drawing
+    
     if (detected or undetectednum<1) and dodetection:
         #undetectednum 'fills in' a few detection to make
         #things look smoother in case we fall out one frame
@@ -524,15 +526,15 @@ while True:
 
         #extract the colors
         #convert to HSV
-        hsv = cv2.cvtColor(sgc, cv2.COLOR_RGB2HSV)
+        hsv = cv2.cvtColor(sgc, cv2.COLOR_BGR2HSV)
         hue, sat, val = cv2.split(hsv)
 
         #do the drawing. pt array should store p,p1,p2
         p3 = (pt[2][0] + pt[1][0] - pt[0][0], pt[2][1] + pt[1][1] - pt[0][1])
-        cv2.line(sg, tuple(pt[0]), tuple(pt[1]), (0, 255, 0), 2)
-        cv2.line(sg, tuple(pt[1]), tuple(p3), (0, 255, 0), 2)
-        cv2.line(sg, tuple(p3), tuple(pt[2]), (0, 255, 0), 2)
-        cv2.line(sg, tuple(pt[2]), tuple(pt[0]), (0, 255, 0), 2)
+        cv2.line(sg, (int(pt[0][0]),int(pt[0][1])), (int(pt[1][0]),int(pt[1][1])), (0, 255, 0), 2)
+        cv2.line(sg, (int(pt[1][0]),int(pt[1][1])), (int(p3[0]),int(p3[1])), (0, 255, 0), 2)
+        cv2.line(sg, (int(p3[0]),int(p3[1])), (int(pt[2][0]),int(pt[2][1])), (0, 255, 0), 2)
+        cv2.line(sg, (int(pt[2][0]),int(pt[2][1])), (int(pt[0][0]),int(pt[0][1])), (0, 255, 0), 2)
         
         #first sort the points so that 0 is BL 1 is UL and 2 is BR
         pt = winded(pt[0], pt[1], pt[2], p3)
@@ -553,25 +555,25 @@ while True:
                 i=1
                 j=j-2
         
-        rad= ptdst(v1,(0.0,0.0))/6.0
+        rad= int(ptdst(v1,(0.0,0.0))/6.0)
         cs=[]
         hsvcs=[]
         den=2
 
         for i, p in enumerate(ep):
             if rad < p[0] < W-rad and rad < p[1] < H-rad:
-                col = np.mean(sgc[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[:3]
-                cv2.circle(sg, tuple(p), rad, tuple(col), -1)
+                col = cv2.mean(sgc[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[:3]
+                cv2.circle(sg, (int(p[0]),int(p[1])), rad, tuple(col), -1)
                 if i==4:
-                    cv2.circle(sg, tuple(p), rad, (0,255,255), 2)
+                    cv2.circle(sg, (int(p[0]),int(p[1])), rad, (0,255,255), 2)
                 else:
-                    cv2.circle(sg, tuple(p), rad, (255,255,255), 2)
+                    cv2.circle(sg, (int(p[0]),int(p[1])), rad, (255,255,255), 2)
                 
                 hueavg = cv2.mean(hue[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[0]
                 satavg = cv2.mean(sat[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[0]
                 
-                cv2.putText(sg, str(int(hueavg)), (p[0]+70,p[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
-                cv2.putText(sg, str(int(satavg)), (p[0]+70,p[1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
+                cv2.putText(sg, str(int(hueavg)), (int(p[0])+70,int(p[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
+                cv2.putText(sg, str(int(satavg)), (int(p[0])+70,int(p[1])+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
                 
                 if extract:
                     cs.append(col)
@@ -610,7 +612,9 @@ while True:
     #draw the selection rectangle
     x=20
     y=20
-    for i in range(selected):x+=3*s+10
+    for i in range(selected):
+        x+=3*s+10
+    
     cv2.rectangle(sg, (x-1,y-1), (x+3*s+5,y+3*s+5), (0,0,255),2)
 
     lastdetected= len(lines)
@@ -620,10 +624,11 @@ while True:
     prev_pyramid, pyramid = pyramid, prev_pyramid
     #draw img
     
-    
     cv2.imshow("Fig", sg)
 
     counter += 1 # global counter
+    
+    
     # handle events
     c = cv2.waitKey(10) % 0x100
     if c == 27: break # ESC
@@ -665,6 +670,5 @@ while True:
             didassignments = not didassignments
         if cc == 's':
             cv2.imwrite("C:\\code\\img\\pic" + str(time()) + ".jpg", sgc)
-
-    cv2.destroyWindow("Fig")
+            cv2.destroyWindow("Fig")
         
