@@ -4,6 +4,8 @@ import numpy as np
 from time import sleep, time
 
 capture = cv2.VideoCapture(0)
+#capture.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
+#capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cv2.namedWindow("Fig")
 ret, frame = capture.read()
 S2, S1 = frame.shape[:2]
