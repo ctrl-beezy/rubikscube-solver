@@ -576,8 +576,8 @@ while True:
                 else:
                     cv2.circle(sg, (int(p[0]),int(p[1])), rad, (255,255,255), 2)
                 
-                hueavg = cv2.mean(hue[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[0]
-                satavg = cv2.mean(sat[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[0]
+                hueavg = cv2.median(hue[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[0]
+                satavg = cv2.median(sat[int(p[1]-rad/den):int(p[1]+rad/den),int(p[0]-rad/den):int(p[0]+rad/den)])[0]
                 
                 cv2.putText(sg, str(int(hueavg)), (int(p[0])+70,int(p[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
                 cv2.putText(sg, str(int(satavg)), (int(p[0])+70,int(p[1])+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
