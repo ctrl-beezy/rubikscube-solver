@@ -7,6 +7,7 @@ import glob
 import time
 import random
 import RPi.GPIO as GPIO
+import processColors
 
 def blinkLed(pin, numBlinks, cycleTime):
     pauseTime = cycleTime/2
@@ -54,30 +55,6 @@ def serial_ports():
             pass
     return result
 
-def guessColor( v, r ):
-    # Centervalues of hue and corresponding char except for white 
-    HueCenters = (
-    ( 105.0,'B'),
-    ( 10.0,"O" ),
-    ( 35.0,  "Y" ),
-    ( 67.0,"G" ),
-    ( 165, "R" )
-    )
-
-
-    for center, code in HueCenters:
-        if ((min[0] <= v[0] <= max[0]) and (min[1] <= v[1] <= max[1]) and (min[2] <= v[2] <= max[2])):
-            if code == 'R':
-                #print(r)
-                if (r[0] <= 100.0 or (r[0] <= 144.0 and r[1] >= 70.0 and  r[2] >= 70.0) or (r[0] <= 180 and r[1] >= 105 and r[2] >= 105)  or (r[0] <= 200 and r[1] >= 120.0 and r[2] >= 130.0 or (r[0] > 150 and r[0] <= 1.8*r[1] and r[0] <= 1.8*(r[2])))):
-                    code = 'O'
-            if (v[1] < 80 and v[2] > 200):
-                    code ='W'
-            if code == 'Y':
-                if (v[0] >= 48 and v[1] > 100 and v[2] < 185):
-                    code = 'G'
-            return code
-    return "X"
 
 def getColors(frame, mat):
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -103,7 +80,7 @@ def getColors(frame, mat):
         clrr = np.array((np.median(block_r),np.median( block_g ), np.median( block_b ))) 
                 
         colorSamples.append(clrh)
-        code.append(guessColor(clrh,clrr))
+    assigned = processColors(clrh)
     return code, colorSamples
 
 

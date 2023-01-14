@@ -11,10 +11,6 @@ ret, frame = capture.read()
 S2, S1 = frame.shape[:2]
 den = 2
 sg = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
-sg2 = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
-sg3 = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
-sg4 = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
-sg5 = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
 sgc = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
 hsv = np.zeros((S1//den, S2//den, 3), dtype=np.uint8)
 dst = np.zeros((S1//den, S2//den, 1), dtype=np.uint8)
