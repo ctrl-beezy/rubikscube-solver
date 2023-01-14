@@ -152,7 +152,7 @@ def neighbors(f,s):
     if f==5 and s==8: return ((3,6),(0,8))
 
 def processColors(useRGB=False):
-    global assigned, didassignments
+    global assigned, didassignments, cubeString
 
     bestj = 0
     besti = 0
@@ -161,6 +161,14 @@ def processColors(useRGB=False):
     bestd = 10001
     taken = [0 for i in range(6)]
     done = 0
+    sideDict = {
+            0 : 'F',
+            1 : 'R',
+            2 : 'B',
+            3 : 'L',
+            4 : 'U',
+            5 : 'D'
+    }
     opposite = {0: 2, 1: 3, 2: 0, 3: 1, 4: 5, 5: 4} # dict of opposite faces
     # possibilities for each face
     poss = {}
@@ -227,7 +235,8 @@ def processColors(useRGB=False):
             if op in p:
                 p.remove(op)
         taken[matchesto] += 1
-
+    cubeString = cubeString.join(map(sideDict.get,assigned,assigned))
+    print(cubeString)
     didassignments = True
 
 succ=0 #number of frames in a row that we were successful in finding the outline
@@ -583,7 +592,7 @@ while True:
             hsvs[selected]=hsvcs
             selected = min(selected+1,5)
     
-    #draw faces of hte extracted cubes
+    #draw faces of the extracted cubes
     x=20
     y=20
     s=13
