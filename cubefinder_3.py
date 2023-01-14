@@ -153,7 +153,8 @@ def neighbors(f,s):
 
 def processColors(useRGB=False):
     global assigned, didassignments, cubeString
-
+    
+    cubeString = ""
     bestj = 0
     besti = 0
     bestcon = 0
@@ -163,9 +164,9 @@ def processColors(useRGB=False):
     done = 0
     sideDict = {
             0 : 'F',
-            1 : 'R',
+            1 : 'L',
             2 : 'B',
-            3 : 'L',
+            3 : 'R',
             4 : 'U',
             5 : 'D'
     }
@@ -220,7 +221,7 @@ def processColors(useRGB=False):
         # assign it
         done += 1
         assigned[bestj][besti] = matchesto
-        #print(bestcon)
+        print(bestcon)
 
         op = opposite[matchesto] # get the opposite side
         # remove this possibility from neighboring stickers
@@ -235,7 +236,8 @@ def processColors(useRGB=False):
             if op in p:
                 p.remove(op)
         taken[matchesto] += 1
-    cubeString = cubeString.join(map(sideDict.get,assigned,assigned))
+    sidesList = assigned[4] + assigned[3] + assigned[0] + assigned[5] + assigned[1] + assigned[2]
+    cubeString = "".join(map(sideDict.get,sidesList,sidesList))
     print(cubeString)
     didassignments = True
 
