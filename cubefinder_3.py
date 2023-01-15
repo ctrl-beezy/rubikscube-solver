@@ -2,10 +2,11 @@ import cv2
 from math import sin,cos,pi,atan2,sqrt
 import numpy as np
 from time import sleep, time
+from kociemba import solve
 
 capture = cv2.VideoCapture(0)
-#capture.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-#capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1000)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 1000)
 cv2.namedWindow("Fig")
 ret, frame = capture.read()
 S2, S1 = frame.shape[:2]
@@ -202,7 +203,7 @@ def processColors(useRGB=False):
                                 dist = ptdstw(s, toloop[k][4])
 
                             considered += 1
-                            if dist < bestd:
+                            if dist <= bestd:
                                 bestd = dist
                                 bestj = j
                                 besti = i
@@ -220,8 +221,9 @@ def processColors(useRGB=False):
 
         # assign it
         done += 1
+        #print (matchesto, bestd)
         assigned[bestj][besti] = matchesto
-        print(bestcon)
+        #print(bestcon)
 
         op = opposite[matchesto] # get the opposite side
         # remove this possibility from neighboring stickers
@@ -236,9 +238,10 @@ def processColors(useRGB=False):
             if op in p:
                 p.remove(op)
         taken[matchesto] += 1
-    sidesList = assigned[4] + assigned[3] + assigned[0] + assigned[5] + assigned[1] + assigned[2]
+    sidesList = list(np.rot90(np.reshape(np.array(assigned[4]),(3,3))).flatten()) + assigned[3] + assigned[0] + list(np.rot90(np.reshape(np.array(assigned[5]),(3,3))).flatten()) + assigned[1] + assigned[2]
     cubeString = "".join(map(sideDict.get,sidesList,sidesList))
     print(cubeString)
+    print(solve(cubeString))
     didassignments = True
 
 succ=0 #number of frames in a row that we were successful in finding the outline
@@ -328,8 +331,12 @@ while True:
             THR += 1
         if lastdetected < dects:
             THR = max(2, THR-1)
-        lines = cv2.HoughLinesP(d, 1, np.pi/180, THR, minLineLength=10, maxLineGap=5)
+        lines = []
+        kek = cv2.HoughLinesP(d, 1, np.pi/180, THR, minLineLength=10, maxLineGap=5)
+        if not np.isscalar(kek) and kek is not  None:
+            lines = kek
         angs = []
+        
         for line in lines:
             x1, y1, x2, y2 = line[0]
             a = atan2(y2-y1, x2-x1)
